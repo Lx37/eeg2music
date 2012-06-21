@@ -174,8 +174,8 @@ class FakeThreadAcquisition(QThread):
     def run(self):
         while True:
             self.buffer = np.random.random((2048,4))
-            self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.2
-            self.buffer[:,3] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.2
+            self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.8
+            self.buffer[:,3] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.8
             time.sleep(0.1)
             self.new_buffer.emit()
 
