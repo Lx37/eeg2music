@@ -2,10 +2,12 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from scope import SimpleCanvas
-
 import time
 import numpy as np
+
+from util import *
+
+
 
 class SimpleSpectrum(QWidget):
     def __init__(self, threadacquisition=None, parent = None,
@@ -52,21 +54,7 @@ class SimpleSpectrum(QWidget):
         
 
 def test_SimpleSpectrum():
-    
-    class FakeThreadAcquisition(QThread):
-        channelCount = 4
-        channelNames = ['a', 'b', 'c', 'd']
-        samplingInterval = 0.002
-        
-        def __init__(self, parent = None,):
-            super(FakeThreadAcquisition, self).__init__()
-            self.buffer = np.random.random((2048, 4))
-            
-        def run(self):
-            while True:
-                self.buffer = np.random.random((2048,4))
-                self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.2
-                time.sleep(0.1)
+    from acquisition import FakeThreadAcquisition
     
     app = QApplication([])
     t = FakeThreadAcquisition()

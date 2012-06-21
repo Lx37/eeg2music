@@ -161,20 +161,42 @@ def test_ThreadAcquisition1():
     app.exec_()
  
 
-class ThreadFakedevice(QThread):
-    def __init__(self, parent = None,
-                        host = "localhost",
-                        port = 51244,
-                        ):
-        super(ThreadAcquisition, self).__init__()
+class FakeThreadAcquisition(QThread):
+    channelCount = 4
+    channelNames = ['a', 'b', 'c', 'd']
+    samplingInterval = 0.002
     
+    new_buffer = pyqtSignal()
+    def __init__(self, parent = None,buffer_size = 1024):
+        super(FakeThreadAcquisition, self).__init__()
+        self.buffer = np.random.random((2048, 4))
+        
     def run(self):
-        self.con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.con.connect((self.host, self.port))
+        while True:
+            self.buffer = np.random.random((2048,4))
+            self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.2
+            self.buffer[:,3] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.2
+            time.sleep(0.1)
+            self.new_buffer.emit()
+
+
+def test_FakeThreadAcquisition1():
+    
+    def get_buffer():
+        print 'sigs', t.buffer.shape
+    
+    app = QApplication([])
+    t = FakeThreadAcquisition(buffer_size = 1024)
+    
+    t.new_buffer.connect(get_buffer)
+    
+    t.start()
+    app.exec_()
 
 
 
 
 if __name__ == '__main__':
-    test_ThreadAcquisition1()
+    #~ test_ThreadAcquisition1()
+    test_FakeThreadAcquisition1()
     
