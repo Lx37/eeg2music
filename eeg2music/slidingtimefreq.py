@@ -97,7 +97,7 @@ class SlindingTimeFreq(QWidget):
         self.mainlayout.addLayout(v)
         
         self.spinboxes = { }
-        for param, value in {'xsize':2., 'f_start':1., 'f_stop':80., 'deltafreq' : .5}.items():
+        for param, value in {'xsize':2., 'f_start':1., 'f_stop':80., 'deltafreq' : .5, 'f0':2.5}.items():
             spin = QDoubleSpinBox( decimals = 1, singleStep = 0.1, value = value, minimum = 0., maximum = np.inf)
             self.spinboxes[spin] = param
             v.addWidget(QLabel(param))
@@ -199,7 +199,7 @@ class SlindingTimeFreq(QWidget):
 def test_SlindingTimeFreq():
     from acquisition import FakeThreadAcquisition
     app = QApplication([])
-    t = FakeThreadAcquisition()
+    t = FakeThreadAcquisition(buffer_size = 2**16)
     t.start()
     w = SlindingTimeFreq(threadacquisition = t)
     w.show()
