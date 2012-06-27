@@ -140,7 +140,6 @@ class SlindingTimeFreq(QWidget):
         p = self.paramsTimeFreq
         self.freqs = arange(p['f_start'],p['f_stop'],p['deltafreq'])
         
-        
     def paramChanged(self):
         spin = self.sender()
         name = self.spinboxes[spin]

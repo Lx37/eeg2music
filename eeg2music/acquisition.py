@@ -162,8 +162,8 @@ def test_ThreadAcquisition1():
  
 
 class FakeThreadAcquisition(QThread):
-    channelCount = 4
-    channelNames = ['a', 'b', 'c', 'd']
+    channelCount = 5
+    channelNames = ['random', 'random_50', 'random_10', 'random_heart', 'sinus_15']
     samplingInterval = 0.002
     
     new_buffer = pyqtSignal()
@@ -173,9 +173,11 @@ class FakeThreadAcquisition(QThread):
         
     def run(self):
         while True:
-            self.buffer = np.random.random((2048,4))
-            self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.8
-            self.buffer[:,3] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.8
+            self.buffer = np.random.random((2048,5))
+            self.buffer[:,1] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.8
+            self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.8
+            self.buffer[-20:,3] *= 3
+            self.buffer[:,4] = np.sin(np.arange(2048)*0.002*2*np.pi*15.)*0.8
             time.sleep(0.1)
             self.new_buffer.emit()
 
