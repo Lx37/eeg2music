@@ -162,7 +162,7 @@ def test_ThreadAcquisition1():
  
 
 class FakeThreadAcquisition(QThread):
-  channelCount = 5
+    channelCount = 5
     channelNames = ['random', 'random_50', 'random-blink', 'random_heart']
     samplingInterval = 0.002
     
