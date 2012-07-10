@@ -199,6 +199,7 @@ class FakeThreadAcquisition(QThread):
             i=i+10
             time.sleep(0.1)
             self.new_buffer.emit()
+	    print 'emition'
 
 
 def test_FakeThreadAcquisition1():
