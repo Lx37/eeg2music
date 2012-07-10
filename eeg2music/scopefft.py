@@ -7,20 +7,15 @@ import time
 
 from util import *
 
-import socket
-
-
-theta1 = 4
-theta2 = 8
-alpha1 = 8
-alpha2 = 12
-
+import udp
 
 
 class SimpleScopefft(QWidget):
     def __init__(self, threadacquisition=None, parent = None,
-                        scope_size = 512, fft_size = 512):
+                        scope_size = 512, fft_size = 512, port = 9001):
         super(SimpleScopefft, self).__init__(parent)
+        
+        self.port = port
         
         self.threadacquisition = threadacquisition
         self.scope_size = scope_size
@@ -28,29 +23,44 @@ class SimpleScopefft(QWidget):
         
         self.mainlayout = QGridLayout()
         self.setLayout(self.mainlayout)
-        
         self.setWindowTitle("Channel scope, fft and power band")
 
         self.combo = QComboBox()
+        self.mainlayout.addWidget(QLabel('Channels'))
         self.mainlayout.addWidget(self.combo)
         
         #Time representation
         self.canvas_time = SimpleCanvas()
-        self.mainlayout.addWidget(self.canvas_time, 1, 0)
+        self.mainlayout.addWidget(self.canvas_time, 2, 0)
         self.ax_time = self.canvas_time.fig.add_subplot(1,1,1)
         
         #Power spectrum
         self.canvas_fft = SimpleCanvas()
-        self.mainlayout.addWidget(self.canvas_fft, 1, 1)
+        self.mainlayout.addWidget(self.canvas_fft, 2, 1)
         self.ax_fft = self.canvas_fft.fig.add_subplot(1,1,1)
         
+        self.comboBand = QComboBox()
+        self.mainlayout.addWidget(QLabel('Select the power band to send'))
+        self.mainlayout.addWidget(self.comboBand,4,0)
+        
         #Power in frequency band
+        self.band_name=['Delta', 'Theta', 'Alpha', 'Beta', 'Gamma']
+        #self.freqs = arange(p['f_start'],p['f_stop'],p['deltafreq'])
         self.ialpha = 0
-        self.alpha = np.zeros((self.scope_size), dtype = 'f')
-        self.theta = np.zeros((self.scope_size), dtype = 'f')
+        self.band = np.zeros((5,self.scope_size), dtype = 'f')
+        #self.beta = np.zeros((self.scope_size), dtype = 'f')
+        #self.gamma = np.zeros((self.scope_size), dtype = 'f')
+        
+        #display selected band
+        self.canvas_select_powband = SimpleCanvas()
+        self.mainlayout.addWidget(self.canvas_select_powband, 5, 0)
+        self.ax_select_powband = self.canvas_select_powband.fig.add_subplot(1,1,1)
+        
+        #display all band
         self.canvas_powband = SimpleCanvas()
-        self.mainlayout.addWidget(self.canvas_powband, 2, 0)
+        self.mainlayout.addWidget(self.canvas_powband,5, 1)
         self.ax_powband = self.canvas_powband.fig.add_subplot(1,1,1)
+        
 
         #Refresh
         self.timer = QTimer(singleShot = False, interval = 100)
@@ -63,11 +73,16 @@ class SimpleScopefft(QWidget):
             self.combo.addItems(self.threadacquisition.channelNames)
             self.freqs = np.fft.fftfreq(self.fft_size, self.threadacquisition.samplingInterval)
         channel = self.combo.currentIndex()
+        
+        if self.comboBand.count()==0:
+            self.comboBand.addItems(self.band_name)
+        id_band = self.comboBand.currentIndex()
+  
   
         #Time representation
         s_time = self.threadacquisition.buffer[-self.scope_size:, channel]
         self.ax_time.clear()
-        self.ax_time.set_title('Signal over time')
+        self.ax_time.set_title('Signal over samples')
         self.ax_time.set_ylabel('Amplitude')
         self.ax_time.set_xlabel('Samples')
         self.ax_time.plot(s_time, color = 'r')
@@ -91,42 +106,45 @@ class SimpleScopefft(QWidget):
         
         
         #Power in frequency band
-        # alpha
-        self.ialpha = np.sum([f[alpha1:alpha2]])/(alpha2-alpha1)
-        self.alpha = np.concatenate( [self.alpha, [self.ialpha]], axis = 0)
-        self.alpha = self.alpha[-self.scope_size:] 
+        #Delta
+        ind = (self.freqs>1.) & (self.freqs<=4.)
+        self.idelta = np.sum([f[ind]])
+        #Theta
+        ind = (self.freqs>4.) & (self.freqs<=8.)
+        self.itheta = np.sum([f[ind]])
+        #Alpha
+        ind = (self.freqs>8.) & (self.freqs<=12.)
+        self.ialpha = np.sum([f[ind]])
+        #Beta
+        ind = (self.freqs>12.) & (self.freqs<=24.)
+        self.ibeta = np.sum([f[ind]])
+        #Gamma
+        ind = (self.freqs>24.) & (self.freqs<=45.)
+        self.igamma = np.sum([f[ind]])
         
-        self.itheta = np.sum([f[theta1:theta2]])/(theta2-theta1)
-        self.theta = np.concatenate( [self.theta, [self.itheta]], axis = 0)
-        self.theta = self.theta[-self.scope_size:] 
+        b = np.array([[self.idelta, self.itheta, self.ialpha, self.ibeta, self.igamma]])
+        self.band = np.concatenate( [self.band, b.T], axis = 1)
+        self.band = self.band[-self.scope_size:] 
         
+        color_band = ['r','b','g','y','m']
         self.ax_powband.clear()
-        self.ax_powband.plot(self.alpha[-20:], color = 'g')
-        self.ax_powband.plot(self.theta[-20:], color = 'b' )
-        self.ax_powband.set_title('Power spectrum in alpha (green) and theta (blue)')
+
+        for i in range (0,len(self.band)):
+            self.ax_powband.plot(self.band[i,-20:], color = color_band[i])
+        self.ax_powband.set_title('Pow in Delta(red)-Theta(blue)-Alpha(green)-Beta(yellow)-Gamma(magenta)')
         self.ax_powband.set_ylabel('Power')
         self.ax_powband.set_xlabel('Windows')
         
         self.canvas_powband.draw()
         
-
-    def send(self):
-    # send data to pure data
-
-        UDP_IP = "127.0.0.1"
-        UDP_PORT = self.port
+        #Selected band
+        self.ax_select_powband.clear()
+        self.ax_select_powband.plot(self.band[id_band,-20:], color = color_band[id_band])
+        self.canvas_select_powband.draw()
         
-        if self.message == "alpha":
-            MESSAGE = str(int(self.ialpha))                
-                
- 
-        print "UDP target IP:", UDP_IP
-        print "UDP target port:", UDP_PORT
-        print "message:", MESSAGE
+        udp.send(self.port, str(int(b[0,id_band])))
 
-        sock = socket.socket( socket.AF_INET, # Internet
-                        socket.SOCK_DGRAM ) # UDP
-        sock.sendto( MESSAGE, (UDP_IP, UDP_PORT) )
+
         
 
 def test_SimpleScopefft():
@@ -140,14 +158,6 @@ def test_SimpleScopefft():
     
     w1 = SimpleScopefft(threadacquisition = t)
     w1.show()
-    w1.port = 9001
-    w1.message = "alpha" #w1.ialpha
-    
-    #send udp timer
-    timer_udp = QTimer(singleShot = False, interval = 100)
-    timer_udp.timeout.connect(w1.send)
-    timer_udp.start()
-
 
     app.exec_()
     

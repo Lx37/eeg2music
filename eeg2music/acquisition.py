@@ -162,25 +162,41 @@ def test_ThreadAcquisition1():
  
 
 class FakeThreadAcquisition(QThread):
-    channelCount = 4
-    channelNames = ['a', 'b', 'c', 'd']
+  channelCount = 5
+    channelNames = ['random', 'random_50', 'random-blink', 'random_heart']
     samplingInterval = 0.002
     
     new_buffer = pyqtSignal()
-    def __init__(self, parent = None,buffer_size = 1024, nb_channel = 4):
-        
+    def __init__(self, parent = None,buffer_size = 1024):
         super(FakeThreadAcquisition, self).__init__()
-        
-        self.buffer_size = buffer_size
-        self.nb_channel = nb_channel
-        self.buffer = np.random.random((self.buffer_size, self.nb_channel))
-        
+        self.buffer = np.random.random((2048, 4))
         
     def run(self):
+        i=0
         while True:
-            self.buffer = np.random.random((self.buffer_size,self.nb_channel))
-            self.buffer[:,2] += np.sin(np.arange(self.buffer_size)*0.002*2*np.pi*50.)*0.8
-            self.buffer[:,3] += np.sin(np.arange(self.buffer_size)*0.002*2*np.pi*10.)*0.8
+            if i > len(self.buffer)/4 :
+                i=0
+            self.buffer = np.random.random((2048,4))
+            self.buffer[:,1] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.8
+            #self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.8
+            #self.buffer[-20:,3] *= 3
+            #self.buffer[:,4] = np.sin(np.arange(2048)*0.002*2*np.pi*15.)*0.8
+            #self.buffer[:,5] = np.cos(np.arange(2048)*0.002*2*np.pi*30.)*0.8
+            self.buffer[-20-i:,2] *= 3
+            self.buffer[-i:,2] *= 0.3
+            if i > 250:
+                self.buffer[260-i:,2] *= 3
+                self.buffer[280-i:,2] *= 0.3
+            self.buffer[-10-i,3] = 3
+            self.buffer[-6-i,3] = -3
+
+            if i > 210:
+                self.buffer[220-i,3] = 3
+                self.buffer[216-i,3] = -3
+
+            #np.arange(self.buffer[-20-i,7])
+            #print len(self.buffer)
+            i=i+10
             time.sleep(0.1)
             self.new_buffer.emit()
 
