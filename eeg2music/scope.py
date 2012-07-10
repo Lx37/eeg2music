@@ -57,7 +57,6 @@ def test_SimpleScope():
 
     w1 = SimpleScope(threadacquisition = t)
     w1.show()
-    
 
 
     app.exec_()

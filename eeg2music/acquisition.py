@@ -162,22 +162,25 @@ def test_ThreadAcquisition1():
  
 
 class FakeThreadAcquisition(QThread):
-    channelCount = 5
-    channelNames = ['random', 'random_50', 'random_10', 'random_heart', 'sinus_15']
+    channelCount = 4
+    channelNames = ['a', 'b', 'c', 'd']
     samplingInterval = 0.002
     
     new_buffer = pyqtSignal()
-    def __init__(self, parent = None,buffer_size = 1024):
+    def __init__(self, parent = None,buffer_size = 1024, nb_channel = 4):
+        
         super(FakeThreadAcquisition, self).__init__()
-        self.buffer = np.random.random((2048, 4))
+        
+        self.buffer_size = buffer_size
+        self.nb_channel = nb_channel
+        self.buffer = np.random.random((self.buffer_size, self.nb_channel))
+        
         
     def run(self):
         while True:
-            self.buffer = np.random.random((2048,5))
-            self.buffer[:,1] += np.sin(np.arange(2048)*0.002*2*np.pi*50.)*0.8
-            self.buffer[:,2] += np.sin(np.arange(2048)*0.002*2*np.pi*10.)*0.8
-            self.buffer[-20:,3] *= 3
-            self.buffer[:,4] = np.sin(np.arange(2048)*0.002*2*np.pi*15.)*0.8
+            self.buffer = np.random.random((self.buffer_size,self.nb_channel))
+            self.buffer[:,2] += np.sin(np.arange(self.buffer_size)*0.002*2*np.pi*50.)*0.8
+            self.buffer[:,3] += np.sin(np.arange(self.buffer_size)*0.002*2*np.pi*10.)*0.8
             time.sleep(0.1)
             self.new_buffer.emit()
 
@@ -188,7 +191,7 @@ def test_FakeThreadAcquisition1():
         print 'sigs', t.buffer.shape
     
     app = QApplication([])
-    t = FakeThreadAcquisition(buffer_size = 1024)
+    t = FakeThreadAcquisition(buffer_size = 109)
     
     t.new_buffer.connect(get_buffer)
     
