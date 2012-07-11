@@ -5,6 +5,8 @@ from PyQt4.QtGui import *
 
 
 from acquisition import ThreadAcquisition, FakeThreadAcquisition
+from signalProcess import simpleSignalProcess
+
 from scope import SimpleScope
 from spectrum import SimpleSpectrum
 from scopefft import SimpleScopefft
@@ -23,9 +25,14 @@ def startMainWindow():
     threadAc = FakeThreadAcquisition()
     
     threadAc.start()
-    #to do
-    #sp = signalprocess(threadacquisition = threadAc)
+
+
+    #process class
+    sp = simpleSignalProcess(threadacquisition = threadAc)
+    sp.show()
   
+  
+    #some possible independant views to add
     #s1 = SimpleScopefft(threadacquisition = threadAc, fft_size = 512, port = 9001)
     #s1.show()
     
@@ -34,9 +41,9 @@ def startMainWindow():
     
     #bs = BlinkScope(threadacquisition = threadAc, port = 9003)
     #bs.show()
-    
-    hs = HeartScope(threadacquisition = threadAc, port = 9004)
-    hs.show()
+
+    #hs = HeartScope(threadacquisition = threadAc, port = 9004)
+    #hs.show()
     
     #f1 = SlindingTimeFreq(threadacquisition = threadAc)
     #f1.show()

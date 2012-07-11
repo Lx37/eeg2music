@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-#from PyQt4 import Qt
+from PyQt4 import Qt
 
 import numpy as np
 #import time
 
 from util import *
 
+from ScopeView import viewScope
+
+#qtA = Qt.QApplication(sys.argv)
 
 class simpleSignalProcess(QWidget):
     def __init__(self, threadacquisition=None, parent = None,
@@ -31,6 +34,9 @@ class simpleSignalProcess(QWidget):
 	self.comboF = []
 	self.comboP = []
 	self.Vbutton = []
+	self.Sbutton = []
+	
+	self.featureData = []
 	
 	self.config = np.zeros((len(self.feature),3))
 	# configuration window : choose channel, parametre and port
@@ -53,16 +59,11 @@ class simpleSignalProcess(QWidget):
 	
 		self.Vbutton.append(QPushButton("View",None))
 		self.mainlayout.addWidget(self.Vbutton[i],i+2,5)
+		self.Vbutton[i].connect(self.Vbutton[i],SIGNAL("clicked()"), self.view_scope)
+		
+		self.Sbutton.append(QPushButton("Start Sending",None))
+		self.mainlayout.addWidget(self.Sbutton[i],i+2,6)
 	
-	
-        #self.canvas = SimpleCanvas()
-        #self.mainlayout.addWidget(self.canvas)
-        #self.ax = self.canvas.fig.add_subplot(1,1,1)
-        
-        #self.combo = QComboBox()
-        #self.mainlayout.addWidget(self.combo)
-
-        #refresh when receive pyqtsignal emition = new buffer arrived
 	self.threadacquisition.new_buffer.connect(self.refresh)
         
         
@@ -82,10 +83,8 @@ class simpleSignalProcess(QWidget):
 		self.config[i,1] = (self.comboF[i].currentIndex ())
 	
 		if self.comboP[i].count()==0:
-			print self.portS[i]
 			self.comboP[i].addItems(self.portS)
 			self.comboP[i].setCurrentIndex(i)
-			print self.port[i]
 		self.config[i,2] = self.comboP[i].currentIndex ()
   
         #s = self.threadacquisition.buffer[-self.scope_size:, ch1]
@@ -95,10 +94,18 @@ class simpleSignalProcess(QWidget):
         
         #self.canvas.draw()
     
-        #Power spectrum
-        s_fft = self.threadacquisition.buffer[-self.fft_size:]
-        self.s_fft = abs(np.fft.fft(s_fft))
+        #To do Feature evaluation spectrum
         
+
+    
+    def view_scope(self,i):
+	
+	print "entre dans viewscop"
+	#vp = viewScope(self.threadacquisition.buffer[-self.fft_size:, self.config[i,0]], self.featureData[i] )
+		
+	
+	    
+		
     
 
 def test_signalProcess():
